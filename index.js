@@ -8,7 +8,7 @@ const server = http.createServer((req, res) => {
 });
 server.listen(process.env.PORT || 10000);
 
-const token = '7990998595:AAEjn6vod2OkMvPvPP1r87IcwQLQwWaDDIw';
+const token = '7990998595:AAGRffTCr_HP8DqmAXxXrJPW3q1Pt6UtF9o';
 const bot = new TelegramBot(token, {polling: true});
 
 console.log("🚀 Mühür Botu Aktif ve Port Dinleniyor!");
