@@ -5,7 +5,7 @@ const http = require('http');
 const server = http.createServer((req, res) => { res.end('Muhur Botu Aktif'); });
 server.listen(process.env.PORT || 10000);
 
-const token = '7990998595:AAEjn6vod2OkMvPvPP1r87IcwQLQwWaDDIw';
+const token = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg';
 const bot = new TelegramBot(token, {polling: true});
 
 bot.on('photo', async (msg) => {
