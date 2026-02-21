@@ -27,3 +27,5 @@ bot.onText(/\/start/, (msg) => {
 });
 
 console.log("🤖 2. Adım Başlatıldı...");
+import http from 'http';
+http.createServer((req, res) => { res.write('Bot Calisiyor'); res.end(); }).listen(process.env.PORT || 8080);
