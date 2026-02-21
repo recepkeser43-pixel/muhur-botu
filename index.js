@@ -1,31 +1,35 @@
 import TelegramBot from 'node-telegram-bot-api';
 import xlsx from 'xlsx';
 import fs from 'fs';
+import http from 'http'; // Render hatasını çözmek için lazım
 
-// Ayarlar
+// --- AYARLAR ---
 const TOKEN = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg';
 const EXCEL_FILE = './bet365-2023-2025-datas.xlsx';
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Excel Okuma Testi
+// --- EXCEL OKUMA ---
+let data = [];
+if (fs.existsSync(EXCEL_FILE)) {
+    try {
+        const wb = xlsx.readFile(EXCEL_FILE);
+        data = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        console.log("Excel hazir.");
+    } catch (e) { console.log("Excel okuma hatasi."); }
+}
+
+// --- BOT KOMUTLARI ---
 bot.onText(/\/start/, (msg) => {
-    let cevap = "✅ ADIM 1 TAMAM: Bot aktif.\n";
-    
-    if (fs.existsSync(EXCEL_FILE)) {
-        try {
-            const wb = xlsx.readFile(EXCEL_FILE);
-            const data = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            cevap += 📊 ADIM 2 TAMAM: Excel başarıyla okundu! Toplam ${data.length} mühür yüklendi.;
-        } catch (e) {
-            cevap += "❌ ADIM 2 HATASI: Excel dosyası var ama okunurken hata verdi.";
-        }
-    } else {
-        cevap += "❌ ADIM 2 HATASI: Excel dosyası GitHub'da bulunamadı! Dosya adını kontrol et.";
-    }
-    
-    bot.sendMessage(msg.chat.id, cevap);
+    const durum = data.length > 0 ? ✅ Excel OK! (${data.length} mühür yüklendi) : "❌ Excel okunamadı!";
+    bot.sendMessage(msg.chat.id, 🚀 Bot Aktif!\n${durum}\n\n/tara yazarak devam edebilirsin.);
 });
 
-console.log("🤖 2. Adım Başlatıldı...");
-import http from 'http';
-http.createServer((req, res) => { res.write('Bot Calisiyor'); res.end(); }).listen(process.env.PORT || 8080);
+// --- RENDER SUSTURUCU (PORT HATASINI ÇÖZER) ---
+// Render bu botu web sitesi sandığı için ona bir cevap veriyoruz
+http.createServer((req, res) => {
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.write('Bot Calisiyor...');
+    res.end();
+}).listen(process.env.PORT || 8080); 
+
+console.log("🤖 Bot ayağa kalktı...");
