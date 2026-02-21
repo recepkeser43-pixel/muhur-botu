@@ -1,11 +1,9 @@
 {
-  "name": "muhur-bot",
+  "name": "muhur-bot-adim1",
   "version": "1.0.0",
   "type": "module",
   "main": "index.js",
   "dependencies": {
-    "node-telegram-bot-api": "^0.64.0",
-    "axios": "^1.6.0",
-    "xlsx": "^0.18.5"
+    "node-telegram-bot-api": "^0.64.0"
   }
 }
