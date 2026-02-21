@@ -3,55 +3,75 @@ import axios from 'axios';
 import xlsx from 'xlsx';
 import fs from 'fs';
 
-// --- AYARLAR ---
-const TELEGRAM_TOKEN = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg';
-const API_KEY = 'D97276aec48765ebfecd9fd261411abb'; // Senin API Key
-const EXCEL_FILE = './bet365-2023-2025-datas.xlsx';
+// --- AYARLARIN ---
+const TOKEN = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg';
+const B365_API_TOKEN = 'D97276aec48765ebfecd9fd261411abb';
+const EXCEL_PATH = './bet365-2023-2025-datas.xlsx';
 
-const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
+const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Excel'i Hafızaya Al
-let muhurler = [];
-if (fs.existsSync(EXCEL_FILE)) {
+// 1. Excel Verilerini Hafızaya Alalım
+let muhurData = [];
+function excelYukle() {
     try {
-        const wb = xlsx.readFile(EXCEL_FILE);
-        muhurler = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-        console.log("✅ Muhur listesi yuklendi: " + muhurler.length + " mac var.");
-    } catch (e) {
-        console.log("❌ Excel okuma hatasi: " + e.message);
+        if (fs.existsSync(EXCEL_PATH)) {
+            const workbook = xlsx.readFile(EXCEL_PATH);
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            muhurData = xlsx.utils.sheet_to_json(sheet);
+            console.log(✅ Excel Hazır! ${muhurData.length} mühür yüklendi.);
+        } else {
+            console.log("❌ Hata: Excel dosyası bulunamadı!");
+        }
+    } catch (err) {
+        console.log("❌ Excel Okuma Hatası: " + err.message);
     }
 }
+excelYukle();
 
-// Otomatik Tarama Fonksiyonu (Bet365 Upcoming Events)
+// 2. Mühür Tarama Fonksiyonu
 async function bulteniTara(chatId) {
-    bot.sendMessage(chatId, "🕵️‍♂️ API uzerinden Bet365 bulteni taraniyor, muhurler aranıyor...");
+    bot.sendMessage(chatId, "🕵️‍♂️ Mühür Radarı bülteni tarıyor, lütfen bekleyin...");
     
     try {
-        const response = await axios.get(https://api.b365api.com/v1/bet365/upcoming?token=${API_KEY}&sport_id=1);
+        // BetsAPI Bet365 Upcoming Maçlar
+        const url = https://api.b365api.com/v1/bet365/upcoming?token=${B365_API_TOKEN}&sport_id=1;
+        const response = await axios.get(url);
         const maclar = response.data.results;
 
-        if (!maclar) return bot.sendMessage(chatId, "⚠️ Bülten verisi alınamadı.");
+        if (!maclar || maclar.length === 0) {
+            return bot.sendMessage(chatId, "⚠️ Şu an API'den canlı bülten verisi gelmiyor.");
+        }
 
-        let bulunanlar = 0;
+        let bulunanSayisi = 0;
 
         maclar.forEach(mac => {
-            // API'den gelen oranları yakalayalım (Açılış oranları)
-            const open_1 = mac.main_odds?.['1_1']?.h_odds; // Ev sahibi
-            const open_2 = mac.main_odds?.['1_1']?.a_odds; // Deplasman
+            // Maçın açılış oranlarını çekiyoruz
+            const o1 = mac.main_odds?.['1_1']?.h_odds; // Ev Sahibi Açılış
+            const o2 = mac.main_odds?.['1_1']?.a_odds; // Deplasman Açılış
 
-            // Excel'deki mühürlerle (Open_1 ve Open_2) kıyasla
-            const bul = muhurler.find(m => 
-                (String(m.Open_1) === String(open_1) && String(m.Open_2) === String(open_2))
-            );
+            if (o1 && o2) {
+                // Excel'deki mühürlerle kıyasla
+                const eslesme = muhurData.find(m => 
+                    String(m.Open_1) === String(o1) && String(m.Open_2) === String(o2)
+                );
 
-            if (bul) {
-                bulunanlar++;
-                bot.sendMessage(chatId, 🚨 **MÜHÜR YAKALANDI!** 🚨\n\n⚽ Maç: ${mac.home.name} - ${mac.away.name}\n📊 Oranlar: ${open_1} - ${open_2}\n📅 Tarih: ${new Date(mac.time * 1000).toLocaleString('tr-TR')}\n\n💡 **Tarihsel Mühür Sonucu: ${bul.Result}**);
+                if (eslesme) {
+                    bulunanSayisi++;
+                    bot.sendMessage(chatId, 
+                        🚨 **MÜHÜR YAKALANDI!** 🚨\n\n +
+                        ⚽ Maç: ${mac.home.name} - ${mac.away.name}\n +
+                        📊 Oranlar: ${o1} - ${o2}\n +
+                        📅 Başlama: ${new Date(mac.time * 1000).toLocaleString('tr-TR')}\n +
+                        💡 **Geçmiş Sonuç: ${eslesme.Result}**
+                    );
+                }
             }
         });
 
-        if (bulunanlar === 0) {
-            bot.sendMessage(chatId, "✅ Su an bultende mühürlü maç bulunamadı.");
+        if (bulunanSayisi === 0) {
+            bot.sendMessage(chatId, "✅ Analiz bitti. Şu anki bültende mühürlü maç bulunamadı.");
+        } else {
+            bot.sendMessage(chatId, 🎉 Toplam ${bulunanSayisi} adet mühürlü maç listelendi!);
         }
 
     } catch (error) {
@@ -59,11 +79,14 @@ async function bulteniTara(chatId) {
     }
 }
 
-// Komutlar
+// 3. Bot Komutları
 bot.onText(/\/start/, (msg) => {
-    bot.sendMessage(msg.chat.id, "🚀 Muhur Radarı Aktif!\n\n/tara - Yazarak bülteni otomatik taratabilirsin.");
+    bot.sendMessage(msg.chat.id, "🚀 Mühür Radarı Aktif!\n\n/tara yazarak Bet365 bültenindeki mühürlü maçları görebilirsin.");
 });
 
 bot.onText(/\/tara/, (msg) => {
     bulteniTara(msg.chat.id);
 });
+
+console.log("🤖 Mühür Botu Çalışmaya Başladı...");
+
