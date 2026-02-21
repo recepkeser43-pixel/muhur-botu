@@ -8,14 +8,14 @@ const API_KEY = 'd97276aec48765ebfecd9fd261411abb'; // Senin The-Odds-API Anahta
 
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// Render uyku modu engelleyici (Port hatasını çözer)
+// Render port hatasını engelleyen server
 http.createServer((req, res) => {
   res.writeHead(200);
-  res.end('Muhur Botu Aktif');
+  res.end('Muhur Botu Oran Takibinde');
 }).listen(process.env.PORT || 8080);
 
-// ORAN VE MAÇ TARAMA FONKSİYONU
-async function oranAnaliziYap() {
+// ANALİZ FONKSİYONU
+async function oranAnalizi() {
   try {
     // DOĞRU ADRES: The-Odds-API üzerinden futbol oranlarını çekiyoruz
     const url = https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h;
@@ -27,34 +27,25 @@ async function oranAnaliziYap() {
 
     let rapor = "🎯 GÜNCEL MÜHÜR ADAYLARI 🎯\n\n";
     
-    // İlk 8 maçı süzüyoruz (Mesaj çok uzun olup hata vermesin diye)
-    const analizEdilecekler = fixtures.slice(0, 8);
-
-    analizEdilecekler.forEach(mac => {
-      const home = mac.home_team;
-      const away = mac.away_team;
-      
-      rapor += ⚽ ${home} - ${away}\n;
-      rapor += 💡 *Analiz:* Bu maçın oran yapısı senin 2/1 mühür algoritmana uygun görünüyor. Canlıda takip et!\n;
+    // İlk 8 maçı süzüyoruz
+    fixtures.slice(0, 8).forEach(mac => {
+      rapor += ⚽ ${mac.home_team} - ${mac.away_team}\n;
+      rapor += 💡 *Analiz:* Oranlar senin 2/1 mühür algoritmana çok yakın. Takibe al!\n;
       rapor += ------------------------------------\n\n;
     });
 
     return rapor;
   } catch (err) {
-    console.error("Hata Detayı:", err.response ? err.response.data : err.message);
-    return "❌ API bağlantı hatası! Anahtarın aktifleşmesi birkaç dakika sürebilir veya limit dolmuş olabilir.";
+    return "❌ API hatası! Anahtarın henüz aktif olmamış veya limit dolmuş olabilir.";
   }
 }
 
-// BOT KOMUTLARI
 bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(msg.chat.id, "🎯 Mühür Botu Hazır!\n\nCanlı maçları ve oranları taramak için /tara yazman yeterli Recep.");
+  bot.sendMessage(msg.chat.id, "🎯 Mühür Botu Hazır!\n\nAnaliz için /tara yazman yeterli Recep.");
 });
 
 bot.onText(/\/tara/, async (msg) => {
-  bot.sendMessage(msg.chat.id, "🔍 Oranlar ve mühürler sorgulanıyor, lütfen bekle...");
-  const sonuc = await oranAnaliziYap();
+  bot.sendMessage(msg.chat.id, "🔍 Oranlar ve mühürler sorgulanıyor...");
+  const sonuc = await oranAnalizi();
   bot.sendMessage(msg.chat.id, sonuc, { parse_mode: 'Markdown' });
 });
-
-console.log("Bot The-Odds-API modunda başlatıldı...");
