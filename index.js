@@ -2,12 +2,12 @@ const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
 const http = require('http');
 
-// ------------------ SABİT AYARLAR ------------------
-const TOKEN = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg';  // Telegram bot token
-const bot = new TelegramBot(TOKEN, { polling: true });
+// ---------- SABİT AYARLAR ----------
+const TOKEN = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg'; // Bot token
 const API_KEY = 'd97276aec48765ebfecd9fd261411abb'; // The-Odds-API key
+const bot = new TelegramBot(TOKEN, { polling: true });
 
-// ------------------ HTTP SERVER ------------------
+// ---------- HTTP SERVER ----------
 const PORT = process.env.PORT || 8080;
 http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -16,7 +16,7 @@ http.createServer((req, res) => {
   console.log(`Sunucu port ${PORT} üzerinde çalışıyor...`);
 });
 
-// ------------------ ANALİZ / MAÇ ÇEKME FONKSİYONU ------------------
+// ---------- MAÇ ÇEKME FONKSİYONU ----------
 async function cekMaclar(limit = 8) {
   try {
     const url = `https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h`;
@@ -34,20 +34,21 @@ async function cekMaclar(limit = 8) {
     });
 
     return rapor;
+
   } catch (err) {
     console.error('API Hatası:', err.message);
     return "❌ API hatası! Anahtar geçersiz veya limit dolmuş olabilir.";
   }
 }
 
-// ------------------ BOT KOMUTLARI ------------------
+// ---------- BOT KOMUTLARI ----------
 
-// /start komutu
+// /start
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(msg.chat.id, "👋 Recep, sistem temizlendi. Canlı maç yüklemesine hazır mısın?");
 });
 
-// /tara komutu
+// /tara
 bot.onText(/\/tara/, async (msg) => {
   bot.sendMessage(msg.chat.id, "⏳ Bülten taranıyor, lütfen bekleyin...");
   const sonuc = await cekMaclar();
