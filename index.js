@@ -4,11 +4,8 @@ const http = require('http');
 
 // ------------------ SABİT AYARLAR ------------------
 const TOKEN = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg';  // Telegram bot token
-const CHAT_ID = 123456789; // Telegram chat ID
-const API_KEY = 'd97276aec48765ebfecd9fd261411abb'; // The-Odds-API key
-
-// Bot başlatılıyor
 const bot = new TelegramBot(TOKEN, { polling: true });
+const API_KEY = 'd97276aec48765ebfecd9fd261411abb'; // The-Odds-API key
 
 // ------------------ HTTP SERVER ------------------
 const PORT = process.env.PORT || 8080;
@@ -19,8 +16,8 @@ http.createServer((req, res) => {
   console.log(`Sunucu port ${PORT} üzerinde çalışıyor...`);
 });
 
-// ------------------ ANALİZ FONKSİYONU ------------------
-async function cekMaclar(limit = 10) {
+// ------------------ ANALİZ / MAÇ ÇEKME FONKSİYONU ------------------
+async function cekMaclar(limit = 8) {
   try {
     const url = `https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h`;
     const response = await axios.get(url);
@@ -47,17 +44,14 @@ async function cekMaclar(limit = 10) {
 
 // /start komutu
 bot.onText(/\/start/, (msg) => {
-  bot.sendMessage(
-    CHAT_ID,
-    `👋 Merhaba!\n\nMühür botu hazır. /tara yazarak maçları görebilirsin.`
-  );
+  bot.sendMessage(msg.chat.id, "👋 Recep, sistem temizlendi. Canlı maç yüklemesine hazır mısın?");
 });
 
 // /tara komutu
 bot.onText(/\/tara/, async (msg) => {
-  bot.sendMessage(CHAT_ID, "⏳ Bülten taranıyor, lütfen bekleyin...");
-  const sonuc = await cekMaclar(10);
-  bot.sendMessage(CHAT_ID, sonuc, { parse_mode: 'Markdown' });
+  bot.sendMessage(msg.chat.id, "⏳ Bülten taranıyor, lütfen bekleyin...");
+  const sonuc = await cekMaclar();
+  bot.sendMessage(msg.chat.id, sonuc, { parse_mode: 'Markdown' });
 });
 
 console.log('Bot başarıyla başlatıldı!');
