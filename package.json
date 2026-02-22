@@ -1,16 +1,16 @@
 {
-  "name": "muhur-analiz",
+  "name": "telegram-football-bot",
   "version": "1.0.0",
-  "description": "Recep Muhur Botu",
+  "description": "Render üzerinde çalışan Telegram Canlı Maç Botu",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "node-telegram-bot-api": "^0.61.0",
-    "axios": "^1.6.0"
+    "axios": "^1.6.7",
+    "node-telegram-bot-api": "^0.65.0"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   }
 }
