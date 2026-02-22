@@ -6,86 +6,56 @@ const http = require('http');
 const token = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg';
 const apiKey = 'd97276aec48765ebfecd9fd261411abb';
 
-// Botu 'polling' (sürekli dinleme) modunda başlatıyoruz
+// Botu başlatıyoruz
 const bot = new TelegramBot(token, { polling: true });
 
-// RENDER İÇİN HTTP SUNUCUSU (Uygulamanın uykuya geçmesini ve Failed olmasını engeller)
+// RENDER'IN İSTEDİĞİ CANLI TUTMA SİSTEMİ
 const server = http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Telegram Bot aktif ve calisiyor!\n');
+  res.end('Mühür Botu Aktif!\n');
 });
 
-// Render, çevresel değişken olarak bir PORT atar, bulamazsa 8080 kullanır
-const PORT = process.env.PORT  8080;
+// BURAYI DÜZELTTİM: Render'ın portunu hatasız okur
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
-  console.log(`Sunucu ${PORT} portunda dinleniyor. Render onayı başarılı.`);
+  console.log(Sunucu ${PORT} portunda aktif.);
 });
 
-// ==========================================
-// TELEGRAM KOMUTLARI
-// ==========================================
-
-// /start komutu - Karşılama mesajı
+// /start komutu
 bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  const mesaj = `👋 Merhaba ${msg.from.first_name  'kullanıcı'}!\n\nBen canlı futbol maçları ve oranları sunan bir botum.\n\nŞu an oynanan canlı maçları görmek için /tara komutunu kullanabilirsiniz.`;
-  
-  bot.sendMessage(chatId, mesaj);
+  bot.sendMessage(msg.chat.id, 👋 Merhaba ${msg.from.first_name}!\n\nMühür botu hazır. /tara yazarak maçları çekebilirsin.);
 });
 
-// /tara komutu - Canlı maçları API'den çeker
+// /tara komutu
 bot.onText(/\/tara/, async (msg) => {
   const chatId = msg.chat.id;
-  
-  // Kullanıcıya bilgi verelim
-  bot.sendMessage(chatId, '⏳ Canlı maçlar ve skorlar getiriliyor, lütfen bekleyin...');
+  bot.sendMessage(chatId, '⏳ Bülten taranıyor, lütfen bekleyin...');
 
   try {
-    // API-Football servisine istek atıyoruz
-    const response = await axios.get('https://v3.football.api-sports.io/fixtures', {
-      params: {
-        live: 'all' // Sadece canlı maçları getirir
-      },
-      headers: {
-        'x-apisports-key': apiKey // API anahtarınız
-      }
-    });
+    // Senin API anahtarına uygun doğru adres (The Odds API)
+    const response = await axios.get(https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${apiKey}&regions=eu&markets=h2h);
+    const fixtures = response.data;
 
-    const fixtures = response.data.response;
-
-    // Eğer anlık oynanan maç yoksa
     if (!fixtures || fixtures.length === 0) {
-      bot.sendMessage(chatId, 'ℹ️ Şu anda oynanan canlı bir maç bulunmamaktadır.');
+      bot.sendMessage(chatId, 'ℹ️ Şu anda bültende maç bulunamadı.');
       return;
     }
 
-    let mesaj = '🔴 *CANLI MAÇLAR VE SKORLAR*\n\n';
-    
-    // Mesajın çok uzun olup hata vermemesi için ilk 15 maçı alıyoruz
-    const limit = Math.min(fixtures.length, 15);
+    let mesaj = '🎯 MÜHÜR ADAYI MAÇLAR 🎯\n\n';
+    const limit = Math.min(fixtures.length, 10);
     
     for (let i = 0; i < limit; i++) {
       const match = fixtures[i];
-      const homeTeam = match.teams.home.name;
-      const awayTeam = match.teams.away.name;
-      const homeGoals = match.goals.home ?? 0;
-      const awayGoals = match.goals.away ?? 0;
-      const elapsed = match.fixture.status.elapsed; // Dakika bilgisi
-      
-      mesaj += ⏱️ ${elapsed}' | ${homeTeam} *${homeGoals} - ${awayGoals}* ${awayTeam}\n;
+      mesaj += ⚽ ${match.home_team} - ${match.away_team}\n;
+      mesaj += 📅 Başlangıç: ${new Date(match.commence_time).toLocaleString('tr-TR')}\n;
+      mesaj += ----------------------------\n\n;
     }
 
-    if (fixtures.length > 15) {
-      mesaj += \n_...ve ${fixtures.length - 15} maç daha oynanıyor._;
-    }
-
-    // Markdown formatında gönderiyoruz ki yazılar kalın/eğik olabilsin
     bot.sendMessage(chatId, mesaj, { parse_mode: 'Markdown' });
 
   } catch (error) {
-    console.error('API Hatası:', error.message);
-    bot.sendMessage(chatId, '❌ Maçları çekerken bir hata oluştu. Lütfen API anahtarınızın doğruluğundan emin olun veya daha sonra tekrar deneyin.');
+    bot.sendMessage(chatId, '❌ API Hatası: Anahtar limitiniz dolmuş olabilir veya yanlış API kullanılıyor.');
   }
 });
 
-console.log('Telegram bot başarıyla başlatıldı!');
+console.log('Bot başarıyla başlatıldı!');
