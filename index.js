@@ -6,9 +6,10 @@ const http = require('http');
 const TOKEN = '7990998595:AAEeC6KINLvSYEiOuVV1rL_VJNq_pH7MSAg';
 const API_KEY = 'd97276aec48765ebfecd9fd261411abb';
 
+// Bot başlatılıyor
 const bot = new TelegramBot(TOKEN, { polling: true });
 
-// HTTP server deploy platformları için gerekli
+// HTTP server deploy platformları için
 const PORT = process.env.PORT || 8080;
 http.createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -36,7 +37,7 @@ async function oranAnalizi() {
 
     return rapor;
   } catch (err) {
-    console.error(err);
+    console.error('API Hatası:', err.message);
     return "❌ API hatası! Anahtarın henüz aktif olmamış veya limit dolmuş olabilir.";
   }
 }
